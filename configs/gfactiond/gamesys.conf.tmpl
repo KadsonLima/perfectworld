@@ -1,0 +1,97 @@
+[LogclientClient]
+type			=	udp
+port			=	$LOGSERVICE_SERVER_UDP_PORT
+address			=	$LOGSERVICE_SERVER_ADDRESS
+so_sndbuf		=	16384
+so_rcvbuf		=	16384
+ibuffermax		=	16384
+obuffermax		=	1048576
+accumulate		=	1048576
+
+[LogclientTcpClient]
+type			=	tcp
+port			=	$LOGSERVICE_SERVER_TCP_PORT
+address			=	$LOGSERVICE_SERVER_ADDRESS
+so_sndbuf		=	16384
+so_rcvbuf		=	16384
+ibuffermax		=	16384
+obuffermax		=	1048576
+accumulate		=	1048576
+
+[GFactionServer]
+type			=	tcp
+port			=	$GFACTION_SERVER_PORT
+address			=	$GFACTIOND_SERVER_ADDRESS
+so_sndbuf		=	65536
+so_rcvbuf		=	65536
+ibuffermax		=	1048576
+obuffermax		=	1048576
+tcp_nodelay		=	0
+listen_backlog	=	10
+accumulate		=	1048576
+sender_interval	=	100000
+accumu_packets	=	4000
+mtrace			=	/tmp/m_trace.link
+table_name              =       filters
+name_charset            =       GB2312
+table_charset           =       UTF-8
+;isec			=	2
+;iseckey		=	123
+;osec			=	2
+;oseckey		=	456
+is_central_faction=false
+
+[GProviderServer]
+id				=	101
+type			=	tcp
+port			=	$GPROVIDER_SERVER_PORT
+address			=	$GFACTIOND_SERVER_ADDRESS
+so_sndbuf		=	65536
+so_rcvbuf		=	65536
+ibuffermax		=	1048576
+obuffermax		=	1048576
+;so_broadcast	=	1
+tcp_nodelay		=	0
+accumulate		=	1048576
+;isec			=	2
+;iseckey		=	123
+;osec			=	2
+;oseckey		=	456
+
+[UniqueNameClient]
+type			=	tcp
+port			=	$UNIQUENAMED_SERVER_PORT
+address			=	$UNIQUENAMED_SERVER_ADDRESS
+so_sndbuf		=	65536
+so_rcvbuf		=	65536
+ibuffermax		=	1048576
+obuffermax		=	1048576
+;so_broadcast	=	1
+tcp_nodelay		=	0
+accumulate		=	268435456
+;isec			=	2
+;iseckey			=	unameiseckey
+;osec			=	2
+;oseckey			=	unameoseckey
+
+[GFactionDBClient]
+type			=	tcp
+port			=	$GAMEDBD_SERVER_PORT
+address			=	$GAMEDBD_SERVER_ADDRESS
+so_sndbuf		=	65536
+so_rcvbuf		=	65536
+ibuffermax		=	1048576
+obuffermax		=	1048576
+;so_broadcast	=	1
+tcp_nodelay		=	0
+accumulate		=	1048576
+;isec			=	2
+;iseckey		=	123
+;osec			=	2
+;oseckey		=	456
+
+[ThreadPool]
+threads			=	(0,1)(1,4)(100,1)(101,1)
+max_queuesize	=	1048576
+prior_strict	=	0
+

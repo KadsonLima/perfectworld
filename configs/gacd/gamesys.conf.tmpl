@@ -1,0 +1,63 @@
+[LogclientClient]
+type            =   udp
+port            =   $LOGSERVICE_SERVER_UDP_PORT
+address         =   $LOGSERVICE_SERVER_ADDRESS
+so_sndbuf       =   16777216
+so_rcvbuf       =   65535
+ibuffermax      =   16384000
+obuffermax      =   16384000
+accumulate      =   16777216
+
+[LogclientTcpClient]
+type            =   tcp
+port            =   $LOGSERVICE_SERVER_TCP_PORT
+address         =   $LOGSERVICE_SERVER_ADDRESS
+so_sndbuf       =   16777216
+so_rcvbuf       =   65535
+ibuffermax      =   16384000
+obuffermax      =   16384000
+accumulate      =   16777216
+
+
+[GAntiCheaterServer]
+type			=	tcp
+port			=	$GACD_ANTICHEAT_SERVER_PORT
+address			=	$GACD_SERVER_ADDRESS
+so_sndbuf		=	16384
+so_rcvbuf		=	16384
+ibuffermax      =   16384000
+obuffermax      =   16384000
+accumulate      =   16384000
+tcp_nodelay		=	1
+listen_backlog		=	10
+;mtrace			= /tmp/mtrace.gacd
+;isec			=	2
+;iseckey			=	456
+;osec			=	2
+;oseckey			=	123
+
+[GACControlServer]
+type			=	tcp
+port			=	$GACD_CONTROL_SERVER_PORT
+address			=	$GACD_SERVER_ADDRESS
+so_sndbuf		=	16384
+so_rcvbuf		=	16384
+ibuffermax      =   16384000
+obuffermax      =   16384000
+accumulate      =   16384000
+tcp_nodelay		=	1
+listen_backlog		=	10
+;mtrace			= /tmp/mtrace.gacd
+;isec			=	6
+;iseckey			=	fmct9clmTwkjupohogomtpfJccb1ac
+;osec			=	5
+;oseckey			=	pvlSyt2jikh0glUsnabfgdsflmmntq
+
+[ThreadPool]
+threads				=	(1,9)(100,1)(101,1)(0,1)
+max_queuesize		=	1048576
+prior_strict		=	0
+
+[Other]
+zoneid=16
+

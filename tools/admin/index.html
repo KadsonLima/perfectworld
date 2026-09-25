@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PW Admin local</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui;background:#11151c;color:#e9edf4}body{max-width:1120px;margin:40px auto;padding:0 20px}h1{font-size:30px}h2{font-size:21px;margin-top:0}.muted{color:#a5b0c1}section{background:#1a202b;border:1px solid #303a49;border-radius:12px;padding:24px;margin:20px 0}button,select,input{font:inherit;padding:9px 12px;border:1px solid #465169;border-radius:6px;background:#252e3e;color:inherit}button{cursor:pointer}button:hover{background:#35425a}button:disabled{opacity:.45;cursor:wait}.primary{background:#265ac5}label{display:block;margin:16px 0 7px}select{width:100%}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:12px 6px;border-bottom:1px solid #303a49}td button{padding:6px 9px;margin:2px}.good{color:#65d4a1}.bad{color:#ffac96}pre{white-space:pre-wrap;font-size:12px;max-height:420px;overflow:auto}#message{padding:16px;border-radius:8px;background:#252e3e;white-space:pre-wrap;margin:20px 0}ol{line-height:1.8}.check{display:flex;gap:10px;align-items:flex-start}small{display:block;margin:8px 0}a{color:#8eb9ff}
+</style>
+<h1>PW Admin <span class="muted">/ local</span></h1>
+<p class="muted">Servidor 1.5.5 · Guerra Territorial para teste de catapulta</p>
+<div id="message" role="status">Carregando servidor…</div>
+<section><h2>Lances de Guerra Territorial</h2>
+<p id="twStatus" class="muted" role="status">Carregando…</p>
+<button class="primary" onclick="controlBids('open')">Abrir lances</button>
+<button onclick="controlBids('close')">Fechar lances</button>
+<button onclick="controlBids('auto')">Voltar à agenda automática</button>
+<button onclick="refreshTwStatus()">Verificar agora</button>
+<p class="muted">As TW são agendadas para 5 minutos após o servidor processar o fechamento dos lances. A confirmação pode levar até 80 segundos; a verificação de início ocorre a cada minuto.</p>
+<p class="muted">As batalhas avançam pelo horário real mesmo com os lances fechados manualmente. Reiniciar o delivery restaura a agenda automática de lances.</p>
+<p class="muted">Fechar encerra a rodada de lances e permite ao servidor processar os resultados. A agenda automática pode reabrir os lances se estiver no período semanal de inscrição.</p></section>
+<section><h2>Recuperar TW e mapa de territórios</h2>
+<p>Se a TW ou o mapa de territórios parar de responder, reinicie o serviço responsável e confira novamente no jogo.</p>
+<button id="restartTerritories" onclick="restartTerritories()">Reiniciar TW e territórios</button>
+<p class="muted">Pode desconectar jogadores e interromper batalhas em andamento. Os lances voltam à agenda automática. Aguarde a reconexão e reabra o mapa de territórios.</p></section>
+<section><h2>Preparar seu teste</h2><ol>
+<li>Crie um clã com seu personagem no NPC de clãs.</li>
+<li>Crie outro personagem e um segundo clã para representar o outro lado.</li>
+<li>Atualize os dados, escolha os clãs e um território e inicie a TW de teste.</li>
+<li>Entre pelo NPC de Guerra Territorial com seu personagem de um desses clãs.</li>
+<li>Confira compra e uso do item de catapulta, vínculo ao puxador, movimento, ataque às estruturas e dano.</li>
+</ol><p class="muted">Uma batalha aceita pelo servidor ainda precisa do teste no cliente. Não é necessário ter jogadores dos dois lados para solicitar o cenário de teste.</p><button onclick="refreshData()">Atualizar clãs e personagens</button> <button onclick="action('/api/probe',{})">Verificar integração TW</button><p id="roles" class="muted"></p></section>
+<section><h2>Criar TW de teste</h2><p>Duração local: 24 horas. O território escolhido será atribuído ao clã defensor na hora e a batalha começa 3 minutos depois. Manter o painel aberto não é necessário, mas ele precisa continuar rodando.</p>
+<div class="grid"><div><label for="city">Território</label><select id="city"></select></div><div><label for="attacker">Clã atacante</label><select id="attacker"></select></div><div><label for="defender">Clã defensor</label><select id="defender"></select></div></div>
+<label class="check"><input id="assign" type="checkbox">Atribuir este território ao defensor para preparar a TW PvP de teste.</label>
+<small class="muted">O estado anterior do território e o resultado ficam salvos para consulta. Se a guerra falhar, a atribuição do território permanece.</small>
+<button class="primary" id="create" onclick="createTW()">Criar TW de teste</button></section>
+<section><h2>Atribuir território a um clã</h2><p>Define o dono de um território direto no banco (mesmo comando <code>SetOwner</code> usado pela TW de teste), sem passar por batalha. Use "Neutro" para remover o dono.</p>
+<div class="grid"><div><label for="ownCity">Território</label><select id="ownCity"></select></div><div><label for="ownFaction">Dono</label><select id="ownFaction"><option value="0">Neutro (sem dono)</option></select></div></div>
+<button class="primary" id="setOwner" onclick="setOwner()">Atribuir território</button></section>
+<section><h2>Adiantar TW</h2><p>Para um território que já tem desafio pendente (<code>challenger</code> preenchido, batalha agendada), dispara a batalha agora em vez de esperar o horário marcado. Não cancela — só antecipa.</p>
+<div class="grid"><div><label for="advanceCity">Território com desafio pendente</label><select id="advanceCity"></select></div></div>
+<button class="primary" onclick="advanceTW()">Adiantar TW agora</button></section>
+<section><h2>Serviços Docker</h2><button onclick="refreshStatus()">Atualizar status</button><table><thead><tr><th>Serviço</th><th>Estado</th><th>Ações</th></tr></thead><tbody id="services"></tbody></table></section>
+<section><h2>Logs de batalha</h2><button onclick="refreshLogs()">Atualizar logs</button><pre id="logs">Clique em atualizar para consultar os logs.</pre></section>
+<script>
+const csrf='__CSRF__';
+const byId=id=>document.getElementById(id);
+function message(text,error=false){byId('message').textContent=text;byId('message').className=error?'bad':'good'}
+async function request(path,data){const response=await fetch(path,data===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify(data)});const result=await response.json();if(!response.ok)throw Error(result.error||'Falha na solicitação');return result}
+async function action(path,data){const buttons=[...document.querySelectorAll('button')];buttons.forEach(b=>b.disabled=true);message('Executando…');try{const result=await request(path,data);message(result.message);return result}catch(error){message(error.message,true)}finally{buttons.forEach(b=>b.disabled=false)}}
+function option(select,value,text){const node=document.createElement('option');node.value=value;node.textContent=text;select.append(node)}
+async function refreshData(){try{const data=await request('/api/data');for(const id of ['attacker','defender','ownFaction']){byId(id).replaceChildren();if(id==='ownFaction')option(byId(id),0,'Neutro (sem dono)');for(const f of data.factions)option(byId(id),f.fid,`${f.name} (ID ${f.fid})`)}if(data.factions.length>1)byId('defender').selectedIndex=1;for(const id of ['city','ownCity']){byId(id).replaceChildren();for(const c of data.cities)option(byId(id),c.id,`Território ${c.id} · nível ${c.level} · dono ${c.owner}`)}byId('advanceCity').replaceChildren();const pending=data.cities.filter(c=>Number(c.challenger)!==0);if(pending.length===0)option(byId('advanceCity'),'','Nenhum território com desafio pendente');for(const c of pending)option(byId('advanceCity'),c.id,`Território ${c.id} · dono ${c.owner} · desafiante ${c.challenger} · batalha em ${c.battle_time==='0'?'?':new Date(c.battle_time*1000).toLocaleString('pt-BR')}`);byId('roles').textContent='Personagens: '+(data.roles.map(r=>`${r.name} · nível ${r.level} · ID ${r.roleid}`).join(' / ')||'nenhum');message(data.factions.length<2?'Crie dois clãs no jogo para preparar uma TW PvP.':'Clãs e territórios atualizados.')}catch(e){message(e.message,true)}}
+async function createTW(){const result=await action('/api/tw',{city:byId('city').value,attacker:byId('attacker').value,defender:byId('defender').value,assign_owner:byId('assign').checked});if(result)await refreshLogs()}
+async function setOwner(){const result=await action('/api/set_owner',{city:byId('ownCity').value,owner:byId('ownFaction').value});if(result)await refreshData()}
+async function advanceTW(){const city=byId('advanceCity').value;if(!city)return message('Nenhum território com desafio pendente.',true);if(!confirm(`Adiantar a TW do território ${city} para agora? A batalha vai começar imediatamente em vez de esperar o horário agendado.`))return;const result=await action('/api/advance_tw',{city});if(result){await refreshData();await refreshLogs()}}
+async function refreshStatus(){try{const rows=await request('/api/status');byId('services').replaceChildren();for(const row of rows){const tr=document.createElement('tr');for(const text of [row.service.replace('perfectworld-',''),row.status]){const td=document.createElement('td');td.textContent=text;tr.append(td)}const actions=document.createElement('td');for(const [key,label] of [['start','Iniciar'],['restart','Reiniciar'],['stop','Parar']]){const button=document.createElement('button');button.textContent=label;button.onclick=async()=>{if(key!=='start'&&!confirm(`${label} ${row.service}? Isso pode desconectar jogadores ou interromper batalhas.`))return;await action('/api/service',{service:row.service,action:key});await refreshStatus()};actions.append(button)}tr.append(actions);byId('services').append(tr)}}catch(e){message(e.message,true)}}
+async function refreshLogs(){try{byId('logs').textContent=(await request('/api/logs')).logs}catch(e){message(e.message,true)}}
+async function controlBids(mode){await action('/api/bids',{action:mode});await refreshTwStatus()}
+async function restartTerritories(){if(!confirm('Reiniciar TW e territórios? Isso pode desconectar jogadores e interromper batalhas. Os lances voltarão à agenda automática.'))return;const result=await action('/api/service',{service:'perfectworld-gdeliveryd',action:'restart'});if(result){await refreshStatus();await refreshTwStatus();await refreshData();message('Serviço de TW e territórios reiniciado. Aguarde a reconexão, reabra o mapa no jogo e confira os lances.')}}
+async function refreshTwStatus(){try{const r=await request('/api/tw_status');const el=byId('twStatus');el.textContent=r.message;el.className=r.state===1?'good':r.state===0?'bad':'muted'}catch(e){byId('twStatus').textContent=e.message;byId('twStatus').className='bad'}}
+refreshStatus();refreshData();refreshTwStatus();
+</script></html>

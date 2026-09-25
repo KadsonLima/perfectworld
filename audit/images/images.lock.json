@@ -1,0 +1,12 @@
+{
+  "authd": "ossperfectworld/perfect-world-authd@sha256:bd93cd2ea3bcf56979fa5d052e274d5dfb9b9c79da6a05a1b2069fe6f9a0e85a",
+  "gacd": "ossperfectworld/perfect-world-gacd@sha256:08615548d2fe8f1fcf8f08222f39d8238f863b2182d39cd4a8b5f1d72a1c64d5",
+  "gamed": "ossperfectworld/perfect-world-gamed@sha256:702e8e2da7816e73528d444af0ef7248e7f13a5e46e10a58207c72299ceadb25",
+  "gamedbd": "ossperfectworld/perfect-world-gamedbd@sha256:9300e9ab87b7bb5a5f1b6513958e0c5785b87c7ebae29027ce6acb0f120565a8",
+  "gdeliveryd": "ossperfectworld/perfect-world-gdeliveryd@sha256:d66d32b7cb048014376db0c280b2b216b436c2fbd4586db7d2dcdf908b301f88",
+  "gfactiond": "ossperfectworld/perfect-world-gfactiond@sha256:8ab2c232b52a738abc18e8c951983017520e7438422cbd19962ef8bf17bb12a7",
+  "glinkd": "ossperfectworld/perfect-world-glinkd@sha256:acc19bc4fcfaae78315af68cd0786669c3d4de71297886bd5baae45baebdde81",
+  "logservice": "ossperfectworld/perfect-world-logservice@sha256:f59472f68f2efcfb4255a0556890b6fcc2c61f100a9545329d0c9c1d78816dd0",
+  "uniquenamed": "ossperfectworld/perfect-world-uniquenamed@sha256:83cd9177f6c8bc0cda0d3791a1a68360cac0600733a9c78389e06321578ead83",
+  "website-register": "ossperfectworld/perfect-world-website-register@sha256:19a8cec615594118ad141f2b54b839b0fb34c6471998911d460fdfb08c0e21aa"
+}

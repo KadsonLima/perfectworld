@@ -1,0 +1,2 @@
+#!/bin/bash
+./gs gs01 gs.conf gmserver.conf gsalias.conf is01 is02 is05 is06 is07 is08 is09 is10 is11 is12 is13 is14 is15 is16 is17 is18 is19 is20 is21 is22 is23 is24 is25 is26 is27 is28 is29 is31 is32 is33 is34 is35 is37 is38 is39 is40 is41 is42 is43 is44 is45 is46 is47 is48 is49 is50 is61 is62 is63 is66 is67 is68 is69 is70 is71 is72 is76 is77 is80 is81 is82 is83 bg01 bg02 bg03 bg04 bg05 bg06 arena01 arena02 arena03 arena04 rand03 rand04 &

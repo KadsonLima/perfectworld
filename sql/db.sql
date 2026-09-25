@@ -1,6 +1,6 @@
-DROP DATABASE IF EXISTS pw;
+-- No database deletion: initialization runs only on an empty MySQL volume.
 
-CREATE DATABASE pw CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE IF NOT EXISTS pw CHARACTER SET utf8 COLLATE utf8_general_ci;
 GRANT SELECT ON mysql.proc TO 'root'@'%';
 
 use pw;
@@ -135,7 +135,7 @@ BEGIN
     UPDATE forbid SET ctime = now(), forbid_time = forbid_time1, reason = reason1, gmroleid = gmroleid1 WHERE userid = userid1 AND type = type1;
     SET rowcount = ROW_COUNT();
     IF rowcount = 0 THEN
-      INSERT INTO forbid VALUES(userid1, type1, now(), forbid_time1, reason1, gmroleid);
+      INSERT INTO forbid VALUES(userid1, type1, now(), forbid_time1, reason1, gmroleid1);
     END IF;
   COMMIT;
 END$$
@@ -347,7 +347,7 @@ BEGIN
     UPDATE iplimit SET ipaddr1 = ipaddr11, ipmask1 = ipmask11, ipaddr2 = ipaddr21, ipmask2 = ipmask21, ipaddr3 = ipaddr31, ipmask3 = ipmask31 WHERE uid = uid1;
     SET rowcount = ROW_COUNT();
     IF rowcount = 0 THEN
-      INSERT INTO iplimit (uid, ipaddr1, ipmask1, ipaddr2, ipmask2, ipaddr3, ipmask3, enable1) VALUES (uid1, ipaddr11, ipmask11, ipaddr21, ipmask21, ipaddr31, ipmask31,'t');
+      INSERT INTO iplimit (uid, ipaddr1, ipmask1, ipaddr2, ipmask2, ipaddr3, ipmask3, enable) VALUES (uid1, ipaddr11, ipmask11, ipaddr21, ipmask21, ipaddr31, ipmask31,'t');
     END IF;
   COMMIT;
 END$$
@@ -371,7 +371,7 @@ CREATE PROCEDURE `updateUserInfo`(
  )
 BEGIN
   START TRANSACTION;
-    UPDATE users SET prompt = prompt1, answer = answer1, truename = truename1, idnumber = idnumber1, email = email1, mobilenumber = mobilenumber1, province = province1, city = city1, phonenumber = phonenumber1, address = address1, postalcode = postalcode1, gender = gender1, birthday = birthda1, qq = qq1 WHERE name = name1;
+    UPDATE users SET prompt = prompt1, answer = answer1, truename = truename1, idnumber = idnumber1, email = email1, mobilenumber = mobilenumber1, province = province1, city = city1, phonenumber = phonenumber1, address = address1, postalcode = postalcode1, gender = gender1, birthday = birthday1, qq = qq1 WHERE name = name1;
   COMMIT;
 END$$
 

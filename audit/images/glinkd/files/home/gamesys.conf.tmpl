@@ -1,0 +1,272 @@
+[GLinkServer1]
+type			=	tcp
+port			=	$GLINKD_SERVER_1_PORT
+address			=	$GLINKD_SERVER_ADDRESS
+so_sndbuf		=	12288
+so_rcvbuf		=	12288
+ibuffermax		=	16384
+obuffermax		=	65536
+tcp_nodelay		=	0
+listen_backlog	=	10
+accumulate		=	131072
+max_users		=	3000
+halflogin_users =	6000
+sender_interval	=	200000
+accumu_packets	=	32768
+mtrace			=	/tmp/m_trace.link
+compress		=	0
+close_discard	=	1
+urgency_support	=	1
+version=10505
+
+[GLinkServer2]
+type			=	tcp
+port			=	$GLINKD_SERVER_2_PORT
+address			=	$GLINKD_SERVER_ADDRESS
+so_sndbuf		=	12288
+so_rcvbuf		=	12288
+ibuffermax		=	16384
+obuffermax		=	65536
+tcp_nodelay		=	0
+listen_backlog	=	10
+accumulate		=	131072
+max_users		=	3000
+halflogin_users	=	6000
+sender_interval	=	200000
+accumu_packets	=	32768
+mtrace			=	/tmp/m_trace.link
+compress		=	0
+close_discard	=	1
+urgency_support	=	1
+version=10505
+
+[GLinkServer3]
+type			=	tcp
+port			=	$GLINKD_SERVER_3_PORT
+address			=	$GLINKD_SERVER_ADDRESS
+so_sndbuf		=	12288
+so_rcvbuf		=	12288
+ibuffermax		=	16384
+obuffermax		=	65536
+tcp_nodelay		=	0
+listen_backlog	=	10
+accumulate		=	131072
+max_users		=	3000
+halflogin_users =	6000
+sender_interval	=	200000
+accumu_packets	=	32768
+mtrace			=	/tmp/m_trace.link
+compress		=	0
+close_discard	=	1
+urgency_support	=	1
+version=10505
+
+[GLinkServer4]
+type			=	tcp
+port			=	$GLINKD_SERVER_4_PORT
+address			=	$GLINKD_SERVER_ADDRESS
+so_sndbuf		=	12288
+so_rcvbuf		=	12288
+ibuffermax		=	16384
+obuffermax		=	65536
+tcp_nodelay		=	0
+listen_backlog	=	10
+accumulate		=	131072
+max_users		=	3000
+halflogin_users =	6000
+sender_interval	=	200000
+accumu_packets	=	32768
+mtrace			=	/tmp/m_trace.link
+compress		=	0
+close_discard	=	1
+urgency_support	=	1
+version=10505
+
+[GLinkServer5]
+type                    =       tcp
+port                    =       $GLINKD_SERVER_5_PORT
+address                 =       $GLINKD_SERVER_ADDRESS
+so_sndbuf               =       12288
+so_rcvbuf               =       12288
+ibuffermax              =       16384
+obuffermax              =       65536
+tcp_nodelay             =       0
+listen_backlog  =       10
+accumulate              =       131072
+max_users               =       3000
+halflogin_users =       6000
+sender_interval =       200000
+accumu_packets  =       32768
+mtrace                  =       /tmp/m_trace.link
+compress                =       0
+close_discard   =       1
+urgency_support =       1
+version=10505
+
+[GLinkServer6]
+type                    =       tcp
+port                    =       $GLINKD_SERVER_6_PORT
+address                 =       $GLINKD_SERVER_ADDRESS
+so_sndbuf               =       12288
+so_rcvbuf               =       12288
+ibuffermax              =       16384
+obuffermax              =       65536
+tcp_nodelay             =       0
+listen_backlog  =       10
+accumulate              =       131072
+max_users               =       3000
+halflogin_users =       6000
+sender_interval =       200000
+accumu_packets  =       32768
+mtrace                  =       /tmp/m_trace.link
+compress                =       0
+close_discard   =       1
+urgency_support =       1
+version=10505
+
+[GLinkServer7]
+type                    =       tcp
+port                    =       $GLINKD_SERVER_7_PORT
+address                 =       $GLINKD_SERVER_ADDRESS
+so_sndbuf               =       12288
+so_rcvbuf               =       12288
+ibuffermax              =       16384
+obuffermax              =       65536
+tcp_nodelay             =       0
+listen_backlog  =       10
+accumulate              =       131072
+max_users               =       3000
+halflogin_users =       6000
+sender_interval =       200000  
+accumu_packets  =       32768   
+mtrace                  =       /tmp/m_trace.link
+compress                =       0
+close_discard   =       1       
+urgency_support =       1       
+version=10505
+link_type       =     2
+
+[GDeliveryClient]
+type			=	tcp
+port			=	$GDELIVERYD_SERVER_PORT
+address			=	$GDELIVERYD_SERVER_ADDRESS
+so_sndbuf		=	65536
+so_rcvbuf		=	65536
+ibuffermax		=	1048576
+obuffermax		=	1048576
+tcp_nodelay		=	0
+accumulate		=	268435456
+
+[GProviderServer1]
+type			=	tcp
+port			=	$GLINKD_DELIVERY_SERVER_1_PORT
+address			=	$GLINKD_SERVER_ADDRESS
+so_sndbuf		=	65536
+so_rcvbuf		=	65536
+ibuffermax		=	1048576
+obuffermax		=	1048576
+tcp_nodelay		=	0
+accumulate		=	268435456
+
+[GProviderServer2]
+type			=	tcp
+port			=	$GLINKD_DELIVERY_SERVER_2_PORT
+address			=	$GLINKD_SERVER_ADDRESS
+so_sndbuf		=	65536
+so_rcvbuf		=	65536
+ibuffermax		=	1048576
+obuffermax		=	1048576
+tcp_nodelay		=	0
+accumulate		=	268435456
+
+[GProviderServer3]
+type			=	tcp
+port			=	$GLINKD_DELIVERY_SERVER_3_PORT
+address			=	$GLINKD_SERVER_ADDRESS
+so_sndbuf		=	65536
+so_rcvbuf		=	65536
+ibuffermax		=	1048576
+obuffermax		=	1048576
+tcp_nodelay		=	0
+accumulate		=	268435456
+
+[GProviderServer4]
+type			=	tcp
+port			=	$GLINKD_DELIVERY_SERVER_4_PORT
+address			=	$GLINKD_SERVER_ADDRESS
+so_sndbuf		=	65536
+so_rcvbuf		=	65536
+ibuffermax		=	1048576
+obuffermax		=	1048576
+tcp_nodelay		=	0
+accumulate		=	268435456
+
+[GProviderServer5]
+type                    =       tcp
+port                    =       $GLINKD_DELIVERY_SERVER_5_PORT
+address                 =       $GLINKD_SERVER_ADDRESS
+so_sndbuf               =       65536
+so_rcvbuf               =       65536
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+accumulate              =       268435456
+
+[GProviderServer6]
+type                    =       tcp
+port                    =       $GLINKD_DELIVERY_SERVER_6_PORT
+address                 =       $GLINKD_SERVER_ADDRESS
+so_sndbuf               =       65536
+so_rcvbuf               =       65536
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+accumulate              =       268435456
+
+[GProviderServer7]
+type                    =       tcp
+port                    =       $GLINKD_DELIVERY_SERVER_7_PORT
+address                 =       $GLINKD_SERVER_ADDRESS
+so_sndbuf               =       65536
+so_rcvbuf               =       65536
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+accumulate              =       268435456
+
+[GFactionClient]
+type			=	tcp
+port			=	$GFACTION_SERVER_PORT
+address			=	$GFACTIOND_SERVER_ADDRESS
+so_sndbuf		=	65536
+so_rcvbuf		=	65536
+ibuffermax		=	1638400
+obuffermax		=	1638400
+tcp_nodelay		=	0
+accumulate		=	268435456
+
+[LogclientClient]
+type			=	udp
+port			=	$LOGSERVICE_SERVER_UDP_PORT
+address			=	$LOGSERVICE_SERVER_ADDRESS
+so_sndbuf		=	65536
+so_rcvbuf		=	65536
+ibuffermax		=	65536
+obuffermax		=	1048576
+accumulate		=	1048576
+
+[LogclientTcpClient]
+type			=	tcp
+port			=	$LOGSERVICE_SERVER_TCP_PORT
+address			=	$LOGSERVICE_SERVER_ADDRESS
+so_sndbuf		=	65536
+so_rcvbuf		=	65536
+ibuffermax		=	65536
+obuffermax		=	1048576
+accumulate		=	1048576
+
+[ThreadPool]
+threads			=	(1,3)(100,1)(101,1)(0,1)
+max_queuesize	=	1048576
+prior_strict	=	1
+

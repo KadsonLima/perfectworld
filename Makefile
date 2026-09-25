@@ -1,5 +1,5 @@
 up-perfectworld:
-	docker-compose --file docker-compose.yaml up --build -d
+	docker compose up -d
 
 down-perfectworld:
-	docker-compose --file docker-compose.yaml down
+	docker compose down

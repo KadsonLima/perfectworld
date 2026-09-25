@@ -1,0 +1,6 @@
+.env
+.env.bak-*
+backups/
+runtime/
+__pycache__/
+tools/vendor/

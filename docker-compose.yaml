@@ -1,278 +1,754 @@
-version: "2"
-services:
-  perfectworld-authd:
-    container_name: perfectworld-authd
-    depends_on:
-      - perfectworld-uniquenamed
-    expose:
-      - "29200/tcp"
-    restart: always
-    environment:
-      AUTHD_SERVER_ADDRESS: 0.0.0.0
-      AUTHD_SERVER_PORT: 29200
-      MYSQL_ADDRESS: 172.30.1.20
-      MYSQL_PORT: 3306
-      MYSQL_DB: pw
-      MYSQL_USER: root
-      MYSQL_PASSWORD: root
-      TZ: Asia/Jakarta
-    image: ossperfectworld/perfect-world-authd:latest
-    networks:
-      infrastructure:
-        ipv4_address: 172.30.1.4
-  perfectworld-db:
-    container_name: perfectworld-db
-    image: mysql:5.7
-    restart: always
-    expose:
-      - "3306/tcp"
-    volumes:
-      - ./sql:/docker-entrypoint-initdb.d
-      - perfectworld-mysql-volume:/var/lib/mysql
-    networks:
-      infrastructure:
-        ipv4_address: 172.30.1.20
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: pw
-      MYSQL_USER: unused
-      MYSQL_PASSWORD: unused
-      TZ: Asia/Jakarta
-  perfectworld-gacd:
-    container_name: perfectworld-gacd
-    depends_on:
-        - perfectworld-gamedbd
-    expose:
-      - "29702/tcp"
-      - "29712/tcp"
-    restart: always
-    environment:
-      LOGSERVICE_SERVER_UDP_PORT: 11100
-      LOGSERVICE_SERVER_TCP_PORT: 11101
-      LOGSERVICE_SERVER_ADDRESS: 172.30.1.2
-      GACD_SERVER_ADDRESS: 0.0.0.0
-      GACD_ANTICHEAT_SERVER_PORT: 29702
-      GACD_CONTROL_SERVER_PORT: 29712
-      TZ: Asia/Jakarta
-    image: ossperfectworld/perfect-world-gacd:latest
-    networks:
-      infrastructure:
-        ipv4_address: 172.30.1.6
-  perfectworld-gamed:
-    container_name: perfectworld-gamed
-    depends_on:
-        - perfectworld-glinkd
-    restart: always
-    environment:
-      GDELIVERYD_SERVER_ADDRESS: 172.30.1.8
-      GDELIVERYD_PROVIDER_SERVER_PORT: 29300
-      GAMEDBD_SERVER_ADDRESS: 172.30.1.5
-      GAMEDBD_SERVER_PORT: 29400
-      LOGSERVICE_SERVER_UDP_PORT: 11100
-      LOGSERVICE_SERVER_TCP_PORT: 11101
-      LOGSERVICE_SERVER_ADDRESS: 172.30.1.2
-      GFACTIOND_SERVER_ADDRESS: 172.30.1.7
-      GPROVIDER_SERVER_PORT: 29600
-      GLINKD_SERVER_ADDRESS: 172.30.1.9
-      GLINKD_DELIVERY_SERVER_1_PORT: 29301
-      GLINKD_DELIVERY_SERVER_2_PORT: 29302
-      GLINKD_DELIVERY_SERVER_3_PORT: 29303
-      GLINKD_DELIVERY_SERVER_4_PORT: 29304
-      GLINKD_DELIVERY_SERVER_5_PORT: 29305
-      GLINKD_DELIVERY_SERVER_6_PORT: 29306
-      GLINKD_DELIVERY_SERVER_7_PORT: 29307
-      TZ: Asia/Jakarta
-    image: ossperfectworld/perfect-world-gamed:latest
-    networks:
-      infrastructure:
-        ipv4_address: 172.30.1.10
-  perfectworld-gamedbd:
-    container_name: perfectworld-gamedbd
-    depends_on:
-        - perfectworld-authd
-    expose:
-      - "29400/tcp"
-    restart: always
-    volumes:
-      - perfectworld-dbhomewdb-volume:/home/dbhomewdb
-      - perfectworld-backupwdb-volume:/home/backupwdb
-    environment:
-      LOGSERVICE_SERVER_UDP_PORT: 11100
-      LOGSERVICE_SERVER_TCP_PORT: 11101
-      LOGSERVICE_SERVER_ADDRESS: 172.30.1.2
-      GAMEDBD_SERVER_ADDRESS: 0.0.0.0
-      GAMEDBD_SERVER_PORT: 29400
-      TZ: Asia/Jakarta
-    image: ossperfectworld/perfect-world-gamedbd:latest
-    networks:
-      infrastructure:
-        ipv4_address: 172.30.1.5
-  perfectworld-gdeliveryd:
-    container_name: perfectworld-gdeliveryd
-    depends_on:
-        - perfectworld-gfactiond
-    expose:
-      - "29300/tcp"
-      - "29100/tcp"
-    restart: always
-    environment:
-      LOGSERVICE_SERVER_UDP_PORT: 11100
-      LOGSERVICE_SERVER_TCP_PORT: 11101
-      LOGSERVICE_SERVER_ADDRESS: 172.30.1.2
-      AUTHD_SERVER_ADDRESS: 172.30.1.4
-      AUTHD_SERVER_PORT: 29200
-      UNIQUENAMED_SERVER_ADDRESS: 172.30.1.3
-      UNIQUENAMED_SERVER_PORT: 29401
-      GAMEDBD_SERVER_ADDRESS: 172.30.1.5
-      GAMEDBD_SERVER_PORT: 29400
-      GACD_SERVER_ADDRESS: 172.30.1.6
-      GACD_ANTICHEAT_SERVER_PORT: 29702
-      GFACTIOND_SERVER_ADDRESS: 172.30.1.7
-      GFACTION_SERVER_PORT: 29500
-      GDELIVERYD_SERVER_ADDRESS: 0.0.0.0
-      GDELIVERYD_PROVIDER_SERVER_PORT: 29300
-      GDELIVERYD_SERVER_PORT: 29100
-      TZ: Asia/Jakarta
-    image: ossperfectworld/perfect-world-gdeliveryd:latest
-    networks:
-      infrastructure:
-        ipv4_address: 172.30.1.8
-  perfectworld-gfactiond:
-    container_name: perfectworld-gfactiond
-    depends_on:
-        - perfectworld-gacd
-    expose:
-      - "29500/tcp"
-      - "29600/tcp"
-    restart: always
-    environment:
-      LOGSERVICE_SERVER_UDP_PORT: 11100
-      LOGSERVICE_SERVER_TCP_PORT: 11101
-      LOGSERVICE_SERVER_ADDRESS: 172.30.1.2
-      GFACTIOND_SERVER_ADDRESS: 0.0.0.0
-      GFACTION_SERVER_PORT: 29500
-      GPROVIDER_SERVER_PORT: 29600
-      GAMEDBD_SERVER_ADDRESS: 172.30.1.5
-      GAMEDBD_SERVER_PORT: 29400
-      UNIQUENAMED_SERVER_ADDRESS: 172.30.1.3
-      UNIQUENAMED_SERVER_PORT: 29401
-      TZ: Asia/Jakarta
-    image: ossperfectworld/perfect-world-gfactiond:latest
-    networks:
-      infrastructure:
-        ipv4_address: 172.30.1.7
-  perfectworld-glinkd:
-    container_name: perfectworld-glinkd
-    depends_on:
-        - perfectworld-gdeliveryd
-    ports:
-    - "{PUBLIC_IP}:29000:29000"
-    expose:
-      - "29000/tcp"
-      - "29001/tcp"
-      - "29002/tcp"
-      - "29003/tcp"
-      - "29004/tcp"
-      - "29005/tcp"
-      - "29006/tcp"
-      - "29301/tcp"
-      - "29302/tcp"
-      - "29303/tcp"
-      - "29304/tcp"
-      - "29305/tcp"
-      - "29306/tcp"
-      - "29307/tcp"
-    restart: always
-    environment:
-      LOGSERVICE_SERVER_UDP_PORT: 11100
-      LOGSERVICE_SERVER_TCP_PORT: 11101
-      LOGSERVICE_SERVER_ADDRESS: 172.30.1.2
-      GFACTIOND_SERVER_ADDRESS: 172.30.1.7
-      GFACTION_SERVER_PORT: 29500
-      GDELIVERYD_SERVER_ADDRESS: 172.30.1.8
-      GDELIVERYD_SERVER_PORT: 29100
-      GLINKD_SERVER_ADDRESS: 0.0.0.0
-      GLINKD_SERVER_1_PORT: 29000
-      GLINKD_SERVER_2_PORT: 29001
-      GLINKD_SERVER_3_PORT: 29002
-      GLINKD_SERVER_4_PORT: 29003
-      GLINKD_SERVER_5_PORT: 29004
-      GLINKD_SERVER_6_PORT: 29005
-      GLINKD_SERVER_7_PORT: 29006
-      GLINKD_DELIVERY_SERVER_1_PORT: 29301
-      GLINKD_DELIVERY_SERVER_2_PORT: 29302
-      GLINKD_DELIVERY_SERVER_3_PORT: 29303
-      GLINKD_DELIVERY_SERVER_4_PORT: 29304
-      GLINKD_DELIVERY_SERVER_5_PORT: 29305
-      GLINKD_DELIVERY_SERVER_6_PORT: 29306
-      GLINKD_DELIVERY_SERVER_7_PORT: 29307
-      TZ: Asia/Jakarta
-    image: ossperfectworld/perfect-world-glinkd:latest
-    networks:
-      infrastructure:
-        ipv4_address: 172.30.1.9
-  perfectworld-logservice:
-    container_name: perfectworld-logservice
-    depends_on:
-        - perfectworld-db
-    expose:
-      - "11100/udp"
-      - "11101/tcp"
-    restart: always
-    environment:
-      LOGSERVICE_SERVER_UDP_PORT: 11100
-      LOGSERVICE_SERVER_TCP_PORT: 11101
-      LOGSERVICE_SERVER_ADDRESS: 0.0.0.0
-      TZ: Asia/Jakarta
-    image: ossperfectworld/perfect-world-logservice:latest
-    networks:
-      infrastructure:
-        ipv4_address: 172.30.1.2
-  perfectworld-uniquenamed:
-    container_name: perfectworld-uniquenamed
-    depends_on:
-        - perfectworld-logservice
-    expose:
-      - "29401/tcp"
-    restart: always
-    environment:
-      LOGSERVICE_SERVER_UDP_PORT: 11100
-      LOGSERVICE_SERVER_TCP_PORT: 11101
-      LOGSERVICE_SERVER_ADDRESS: 172.30.1.2
-      UNIQUENAMED_SERVER_ADDRESS: 0.0.0.0
-      UNIQUENAMED_SERVER_PORT: 29401
-      TZ: Asia/Jakarta
-    image: ossperfectworld/perfect-world-uniquenamed:latest
-    networks:
-      infrastructure:
-        ipv4_address: 172.30.1.3
-  perfectworld-website-register:
-    container_name: perfectworld-website-register
-    ports:
-    - "{PUBLIC_IP}:80:80"
-    expose:
-      - "80/tcp"
-    environment:
-      MYSQL_ADDRESS: 172.30.1.20
-      MYSQL_DB: pw
-      MYSQL_USER: root
-      MYSQL_PASSWORD: root
-      USER_GOLD: 1000000
-      TZ: Asia/Jakarta
-    image: ossperfectworld/perfect-world-website-register:latest
-    networks:
-      infrastructure:
-        ipv4_address: 172.30.1.30
-
-volumes:
-  perfectworld-mysql-volume:
-  perfectworld-dbhomewdb-volume:
-  perfectworld-backupwdb-volume:
- 
-networks:
-  infrastructure:
-    driver: bridge
-    ipam:
-     config:
-       - subnet: 172.30.0.0/16
-         gateway: 172.30.0.1
+{
+  "name": "${COMPOSE_PROJECT_NAME:-perfectworld}",
+  "networks": {
+    "infrastructure": {
+      "driver": "bridge",
+      "ipam": {
+        "config": [
+          {
+            "gateway": "172.30.0.1",
+            "subnet": "172.30.0.0/16"
+          }
+        ]
+      }
+    }
+  },
+  "services": {
+    "perfectworld-authd": {
+      "depends_on": {
+        "perfectworld-uniquenamed": {
+          "condition": "service_started",
+          "required": true
+        },
+        "perfectworld-db": {
+          "condition": "service_healthy"
+        }
+      },
+      "environment": {
+        "AUTHD_SERVER_ADDRESS": "0.0.0.0",
+        "AUTHD_SERVER_PORT": 29200,
+        "MYSQL_ADDRESS": "172.30.1.20",
+        "MYSQL_DB": "pw",
+        "MYSQL_PASSWORD": "${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD no .env}",
+        "MYSQL_PORT": 3306,
+        "MYSQL_USER": "root",
+        "TZ": "${TZ:-America/Montevideo}"
+      },
+      "expose": [
+        "29200/tcp"
+      ],
+      "image": "ossperfectworld/perfect-world-authd@sha256:bd93cd2ea3bcf56979fa5d052e274d5dfb9b9c79da6a05a1b2069fe6f9a0e85a",
+      "networks": {
+        "infrastructure": {
+          "ipv4_address": "172.30.1.4"
+        }
+      },
+      "restart": "unless-stopped",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "platform": "linux/386",
+      "volumes": [
+        {
+          "type": "volume",
+          "source": "pw-authd-home",
+          "target": "/home"
+        },
+        {
+          "type": "bind",
+          "source": "./configs/authd/entrypoint.sh",
+          "target": "/home/entrypoint.sh",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./configs/authd/authd.conf.tmpl",
+          "target": "/home/authd.conf.tmpl",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./configs/authd/table.xml.tmpl",
+          "target": "/home/table.xml.tmpl",
+          "read_only": true
+        }
+      ]
+    },
+    "perfectworld-db": {
+      "environment": {
+        "MYSQL_DATABASE": "pw",
+        "MYSQL_ROOT_PASSWORD": "${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD no .env}",
+        "TZ": "${TZ:-America/Montevideo}",
+        "MYSQL_ROOT_HOST": "%"
+      },
+      "expose": [
+        "3306/tcp"
+      ],
+      "image": "mysql:5.7",
+      "networks": {
+        "infrastructure": {
+          "ipv4_address": "172.30.1.20"
+        }
+      },
+      "restart": "unless-stopped",
+      "volumes": [
+        {
+          "bind": {
+            "create_host_path": true
+          },
+          "source": "D:\\PW SERVER\\perfectworld\\sql",
+          "target": "/docker-entrypoint-initdb.d",
+          "type": "bind",
+          "read_only": true
+        },
+        {
+          "source": "perfectworld-mysql-volume",
+          "target": "/var/lib/mysql",
+          "type": "volume",
+          "volume": {}
+        }
+      ],
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "MYSQL_PWD=\"$$MYSQL_ROOT_PASSWORD\" mysql -h 127.0.0.1 -u root pw -Nse \"SELECT COUNT(*) FROM users\" >/dev/null"
+        ],
+        "interval": "10s",
+        "timeout": "5s",
+        "retries": 18,
+        "start_period": "60s"
+      }
+    },
+    "perfectworld-gacd": {
+      "depends_on": {
+        "perfectworld-gamedbd": {
+          "condition": "service_started",
+          "required": true
+        },
+        "perfectworld-db": {
+          "condition": "service_healthy"
+        }
+      },
+      "environment": {
+        "GACD_ANTICHEAT_SERVER_PORT": 29702,
+        "GACD_CONTROL_SERVER_PORT": 29712,
+        "GACD_SERVER_ADDRESS": "0.0.0.0",
+        "LOGSERVICE_SERVER_ADDRESS": "172.30.1.2",
+        "LOGSERVICE_SERVER_TCP_PORT": 11101,
+        "LOGSERVICE_SERVER_UDP_PORT": 11100,
+        "TZ": "${TZ:-America/Montevideo}"
+      },
+      "expose": [
+        "29702/tcp",
+        "29712/tcp"
+      ],
+      "image": "ossperfectworld/perfect-world-gacd@sha256:08615548d2fe8f1fcf8f08222f39d8238f863b2182d39cd4a8b5f1d72a1c64d5",
+      "networks": {
+        "infrastructure": {
+          "ipv4_address": "172.30.1.6"
+        }
+      },
+      "restart": "unless-stopped",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "platform": "linux/386",
+      "volumes": [
+        {
+          "type": "volume",
+          "source": "pw-gacd-home",
+          "target": "/home"
+        },
+        {
+          "type": "bind",
+          "source": "./configs/gacd/entrypoint.sh",
+          "target": "/home/entrypoint.sh",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./configs/gacd/gamesys.conf.tmpl",
+          "target": "/home/gamesys.conf.tmpl",
+          "read_only": true
+        }
+      ]
+    },
+    "perfectworld-gamed": {
+      "depends_on": {
+        "perfectworld-glinkd": {
+          "condition": "service_started",
+          "required": true
+        },
+        "perfectworld-db": {
+          "condition": "service_healthy"
+        }
+      },
+      "environment": {
+        "GAMEDBD_SERVER_ADDRESS": "172.30.1.5",
+        "GAMEDBD_SERVER_PORT": 29400,
+        "GDELIVERYD_PROVIDER_SERVER_PORT": 29300,
+        "GDELIVERYD_SERVER_ADDRESS": "172.30.1.8",
+        "GFACTIOND_SERVER_ADDRESS": "172.30.1.7",
+        "GLINKD_DELIVERY_SERVER_1_PORT": 29301,
+        "GLINKD_DELIVERY_SERVER_2_PORT": 29302,
+        "GLINKD_DELIVERY_SERVER_3_PORT": 29303,
+        "GLINKD_DELIVERY_SERVER_4_PORT": 29304,
+        "GLINKD_DELIVERY_SERVER_5_PORT": 29305,
+        "GLINKD_DELIVERY_SERVER_6_PORT": 29306,
+        "GLINKD_DELIVERY_SERVER_7_PORT": 29307,
+        "GLINKD_SERVER_ADDRESS": "172.30.1.9",
+        "GPROVIDER_SERVER_PORT": 29600,
+        "LOGSERVICE_SERVER_ADDRESS": "172.30.1.2",
+        "LOGSERVICE_SERVER_TCP_PORT": 11101,
+        "LOGSERVICE_SERVER_UDP_PORT": 11100,
+        "TZ": "${TZ:-America/Montevideo}"
+      },
+      "image": "ossperfectworld/perfect-world-gamed@sha256:702e8e2da7816e73528d444af0ef7248e7f13a5e46e10a58207c72299ceadb25",
+      "networks": {
+        "infrastructure": {
+          "ipv4_address": "172.30.1.10",
+          "aliases": [
+            "game1",
+            "game2",
+            "game3"
+          ]
+        }
+      },
+      "restart": "unless-stopped",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "platform": "linux/386",
+      "volumes": [
+        {
+          "type": "volume",
+          "source": "pw-gamed-home",
+          "target": "/home"
+        },
+        {
+          "type": "bind",
+          "source": "./configs/gamed/entrypoint.sh",
+          "target": "/home/entrypoint.sh",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./configs/gamed/gmserver.conf.tmpl",
+          "target": "/home/gmserver.conf.tmpl",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./configs/gamed/start.sh",
+          "target": "/home/start.sh",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./runtime/tw-balance-1m/elements.data",
+          "target": "/home/config/elements.data",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "command": [
+        "sh",
+        "/home/start.sh"
+      ]
+    },
+    "perfectworld-gamedbd": {
+      "depends_on": {
+        "perfectworld-authd": {
+          "condition": "service_started",
+          "required": true
+        },
+        "perfectworld-db": {
+          "condition": "service_healthy"
+        }
+      },
+      "environment": {
+        "GAMEDBD_SERVER_ADDRESS": "0.0.0.0",
+        "GAMEDBD_SERVER_PORT": 29400,
+        "LOGSERVICE_SERVER_ADDRESS": "172.30.1.2",
+        "LOGSERVICE_SERVER_TCP_PORT": 11101,
+        "LOGSERVICE_SERVER_UDP_PORT": 11100,
+        "TZ": "${TZ:-America/Montevideo}"
+      },
+      "expose": [
+        "29400/tcp"
+      ],
+      "image": "ossperfectworld/perfect-world-gamedbd@sha256:9300e9ab87b7bb5a5f1b6513958e0c5785b87c7ebae29027ce6acb0f120565a8",
+      "networks": {
+        "infrastructure": {
+          "ipv4_address": "172.30.1.5"
+        }
+      },
+      "restart": "unless-stopped",
+      "volumes": [
+        {
+          "source": "perfectworld-dbhomewdb-volume",
+          "target": "/home/dbhomewdb",
+          "type": "volume",
+          "volume": {}
+        },
+        {
+          "source": "perfectworld-backupwdb-volume",
+          "target": "/home/backup",
+          "type": "volume",
+          "volume": {}
+        },
+        {
+          "type": "volume",
+          "source": "pw-gamedbd-home",
+          "target": "/home"
+        },
+        {
+          "type": "bind",
+          "source": "./configs/gamedbd/entrypoint.sh",
+          "target": "/home/entrypoint.sh",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./configs/gamedbd/gamesys.conf.tmpl",
+          "target": "/home/gamesys.conf.tmpl",
+          "read_only": true
+        }
+      ],
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "platform": "linux/386"
+    },
+    "perfectworld-gdeliveryd": {
+      "depends_on": {
+        "perfectworld-gfactiond": {
+          "condition": "service_started",
+          "required": true
+        },
+        "perfectworld-db": {
+          "condition": "service_healthy"
+        }
+      },
+      "environment": {
+        "AUTHD_SERVER_ADDRESS": "172.30.1.4",
+        "AUTHD_SERVER_PORT": 29200,
+        "GACD_ANTICHEAT_SERVER_PORT": 29702,
+        "GACD_SERVER_ADDRESS": "172.30.1.6",
+        "GAMEDBD_SERVER_ADDRESS": "172.30.1.5",
+        "GAMEDBD_SERVER_PORT": 29400,
+        "GDELIVERYD_PROVIDER_SERVER_PORT": 29300,
+        "GDELIVERYD_SERVER_ADDRESS": "0.0.0.0",
+        "GDELIVERYD_SERVER_PORT": 29100,
+        "GFACTIOND_SERVER_ADDRESS": "172.30.1.7",
+        "GFACTION_SERVER_PORT": 29500,
+        "LOGSERVICE_SERVER_ADDRESS": "172.30.1.2",
+        "LOGSERVICE_SERVER_TCP_PORT": 11101,
+        "LOGSERVICE_SERVER_UDP_PORT": 11100,
+        "TZ": "${TZ:-America/Montevideo}",
+        "UNIQUENAMED_SERVER_ADDRESS": "172.30.1.3",
+        "UNIQUENAMED_SERVER_PORT": 29401
+      },
+      "expose": [
+        "29300/tcp",
+        "29100/tcp"
+      ],
+      "image": "ossperfectworld/perfect-world-gdeliveryd@sha256:d66d32b7cb048014376db0c280b2b216b436c2fbd4586db7d2dcdf908b301f88",
+      "networks": {
+        "infrastructure": {
+          "ipv4_address": "172.30.1.8"
+        }
+      },
+      "restart": "unless-stopped",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "platform": "linux/386",
+      "volumes": [
+        {
+          "type": "volume",
+          "source": "pw-gdeliveryd-home",
+          "target": "/home"
+        },
+        {
+          "type": "bind",
+          "source": "./configs/gdeliveryd/entrypoint.sh",
+          "target": "/home/entrypoint.sh",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./configs/gdeliveryd/gamesys.conf.tmpl",
+          "target": "/home/gamesys.conf.tmpl",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./runtime/patches-tw5/gdeliveryd",
+          "target": "/home/gdeliveryd",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ]
+    },
+    "perfectworld-gfactiond": {
+      "depends_on": {
+        "perfectworld-gacd": {
+          "condition": "service_started",
+          "required": true
+        },
+        "perfectworld-db": {
+          "condition": "service_healthy"
+        }
+      },
+      "environment": {
+        "GAMEDBD_SERVER_ADDRESS": "172.30.1.5",
+        "GAMEDBD_SERVER_PORT": 29400,
+        "GFACTIOND_SERVER_ADDRESS": "0.0.0.0",
+        "GFACTION_SERVER_PORT": 29500,
+        "GPROVIDER_SERVER_PORT": 29600,
+        "LOGSERVICE_SERVER_ADDRESS": "172.30.1.2",
+        "LOGSERVICE_SERVER_TCP_PORT": 11101,
+        "LOGSERVICE_SERVER_UDP_PORT": 11100,
+        "TZ": "${TZ:-America/Montevideo}",
+        "UNIQUENAMED_SERVER_ADDRESS": "172.30.1.3",
+        "UNIQUENAMED_SERVER_PORT": 29401
+      },
+      "expose": [
+        "29500/tcp",
+        "29600/tcp"
+      ],
+      "image": "ossperfectworld/perfect-world-gfactiond@sha256:8ab2c232b52a738abc18e8c951983017520e7438422cbd19962ef8bf17bb12a7",
+      "networks": {
+        "infrastructure": {
+          "ipv4_address": "172.30.1.7"
+        }
+      },
+      "restart": "unless-stopped",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "platform": "linux/386",
+      "volumes": [
+        {
+          "type": "volume",
+          "source": "pw-gfactiond-home",
+          "target": "/home"
+        },
+        {
+          "type": "bind",
+          "source": "./configs/gfactiond/entrypoint.sh",
+          "target": "/home/entrypoint.sh",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./configs/gfactiond/gamesys.conf.tmpl",
+          "target": "/home/gamesys.conf.tmpl",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./runtime/patches/gfactiond",
+          "target": "/home/gfactiond",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ]
+    },
+    "perfectworld-glinkd": {
+      "depends_on": {
+        "perfectworld-gdeliveryd": {
+          "condition": "service_started",
+          "required": true
+        },
+        "perfectworld-db": {
+          "condition": "service_healthy"
+        }
+      },
+      "environment": {
+        "GDELIVERYD_SERVER_ADDRESS": "172.30.1.8",
+        "GDELIVERYD_SERVER_PORT": 29100,
+        "GFACTIOND_SERVER_ADDRESS": "172.30.1.7",
+        "GFACTION_SERVER_PORT": 29500,
+        "GLINKD_DELIVERY_SERVER_1_PORT": 29301,
+        "GLINKD_DELIVERY_SERVER_2_PORT": 29302,
+        "GLINKD_DELIVERY_SERVER_3_PORT": 29303,
+        "GLINKD_DELIVERY_SERVER_4_PORT": 29304,
+        "GLINKD_DELIVERY_SERVER_5_PORT": 29305,
+        "GLINKD_DELIVERY_SERVER_6_PORT": 29306,
+        "GLINKD_DELIVERY_SERVER_7_PORT": 29307,
+        "GLINKD_SERVER_1_PORT": 29000,
+        "GLINKD_SERVER_2_PORT": 29001,
+        "GLINKD_SERVER_3_PORT": 29002,
+        "GLINKD_SERVER_4_PORT": 29003,
+        "GLINKD_SERVER_5_PORT": 29004,
+        "GLINKD_SERVER_6_PORT": 29005,
+        "GLINKD_SERVER_7_PORT": 29006,
+        "GLINKD_SERVER_ADDRESS": "0.0.0.0",
+        "LOGSERVICE_SERVER_ADDRESS": "172.30.1.2",
+        "LOGSERVICE_SERVER_TCP_PORT": 11101,
+        "LOGSERVICE_SERVER_UDP_PORT": 11100,
+        "TZ": "${TZ:-America/Montevideo}"
+      },
+      "expose": [
+        "29000/tcp",
+        "29001/tcp",
+        "29002/tcp",
+        "29003/tcp",
+        "29004/tcp",
+        "29005/tcp",
+        "29006/tcp",
+        "29301/tcp",
+        "29302/tcp",
+        "29303/tcp",
+        "29304/tcp",
+        "29305/tcp",
+        "29306/tcp",
+        "29307/tcp"
+      ],
+      "image": "ossperfectworld/perfect-world-glinkd@sha256:acc19bc4fcfaae78315af68cd0786669c3d4de71297886bd5baae45baebdde81",
+      "networks": {
+        "infrastructure": {
+          "ipv4_address": "172.30.1.9"
+        }
+      },
+      "ports": [
+        "${PW_BIND_IP:-127.0.0.1}:${PW_GAME_PORT:-29000}:29000"
+      ],
+      "restart": "unless-stopped",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "platform": "linux/386",
+      "volumes": [
+        {
+          "type": "volume",
+          "source": "pw-glinkd-home",
+          "target": "/home"
+        },
+        {
+          "type": "bind",
+          "source": "./configs/glinkd/entrypoint.sh",
+          "target": "/home/entrypoint.sh",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./configs/glinkd/gamesys.conf.tmpl",
+          "target": "/home/gamesys.conf.tmpl",
+          "read_only": true
+        }
+      ]
+    },
+    "perfectworld-logservice": {
+      "depends_on": {
+        "perfectworld-db": {
+          "condition": "service_healthy"
+        }
+      },
+      "environment": {
+        "LOGSERVICE_SERVER_ADDRESS": "0.0.0.0",
+        "LOGSERVICE_SERVER_TCP_PORT": 11101,
+        "LOGSERVICE_SERVER_UDP_PORT": 11100,
+        "TZ": "${TZ:-America/Montevideo}"
+      },
+      "expose": [
+        "11100/udp",
+        "11101/tcp"
+      ],
+      "image": "ossperfectworld/perfect-world-logservice@sha256:f59472f68f2efcfb4255a0556890b6fcc2c61f100a9545329d0c9c1d78816dd0",
+      "networks": {
+        "infrastructure": {
+          "ipv4_address": "172.30.1.2"
+        }
+      },
+      "restart": "unless-stopped",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "platform": "linux/386",
+      "volumes": [
+        {
+          "type": "volume",
+          "source": "pw-logservice-home",
+          "target": "/home"
+        },
+        {
+          "type": "bind",
+          "source": "./configs/logservice/entrypoint.sh",
+          "target": "/home/entrypoint.sh",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./configs/logservice/logservice.conf.tmpl",
+          "target": "/home/logservice.conf.tmpl",
+          "read_only": true
+        }
+      ]
+    },
+    "perfectworld-uniquenamed": {
+      "depends_on": {
+        "perfectworld-logservice": {
+          "condition": "service_started",
+          "required": true
+        },
+        "perfectworld-db": {
+          "condition": "service_healthy"
+        }
+      },
+      "environment": {
+        "LOGSERVICE_SERVER_ADDRESS": "172.30.1.2",
+        "LOGSERVICE_SERVER_TCP_PORT": 11101,
+        "LOGSERVICE_SERVER_UDP_PORT": 11100,
+        "TZ": "${TZ:-America/Montevideo}",
+        "UNIQUENAMED_SERVER_ADDRESS": "0.0.0.0",
+        "UNIQUENAMED_SERVER_PORT": 29401,
+        "LOG_SERVICE_SERVER_UDP_PORT": 11100,
+        "LOG_SERVICE_SERVER_ADDRESS": "172.30.1.2",
+        "LOG_SERVICE_SERVER_TCP_PORT": 11101
+      },
+      "expose": [
+        "29401/tcp"
+      ],
+      "image": "ossperfectworld/perfect-world-uniquenamed@sha256:83cd9177f6c8bc0cda0d3791a1a68360cac0600733a9c78389e06321578ead83",
+      "networks": {
+        "infrastructure": {
+          "ipv4_address": "172.30.1.3"
+        }
+      },
+      "restart": "unless-stopped",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "platform": "linux/386",
+      "volumes": [
+        {
+          "type": "volume",
+          "source": "pw-uniquenamed-home",
+          "target": "/home"
+        },
+        {
+          "type": "bind",
+          "source": "./configs/uniquenamed/entrypoint.sh",
+          "target": "/home/entrypoint.sh",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./configs/uniquenamed/gamesys.conf.tmpl",
+          "target": "/home/gamesys.conf.tmpl",
+          "read_only": true
+        }
+      ]
+    },
+    "perfectworld-website-register": {
+      "environment": {
+        "MYSQL_ADDRESS": "172.30.1.20",
+        "MYSQL_DB": "pw",
+        "MYSQL_PASSWORD": "${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD no .env}",
+        "MYSQL_USER": "root",
+        "TZ": "${TZ:-America/Montevideo}",
+        "USER_GOLD": 1000000
+      },
+      "expose": [
+        "80/tcp"
+      ],
+      "image": "ossperfectworld/perfect-world-website-register@sha256:19a8cec615594118ad141f2b54b839b0fb34c6471998911d460fdfb08c0e21aa",
+      "networks": {
+        "infrastructure": {
+          "ipv4_address": "172.30.1.30"
+        }
+      },
+      "ports": [
+        "${PW_BIND_IP:-127.0.0.1}:${PW_REGISTER_PORT:-8080}:80"
+      ],
+      "restart": "unless-stopped",
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      },
+      "platform": "linux/amd64",
+      "depends_on": {
+        "perfectworld-db": {
+          "condition": "service_healthy"
+        }
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "./configs/website-register/register.php",
+          "target": "/var/www/html/register.php",
+          "read_only": true
+        }
+      ]
+    }
+  },
+  "volumes": {
+    "perfectworld-backupwdb-volume": {},
+    "perfectworld-dbhomewdb-volume": {},
+    "perfectworld-mysql-volume": {},
+    "pw-authd-home": {},
+    "pw-gacd-home": {},
+    "pw-gamed-home": {},
+    "pw-gamedbd-home": {},
+    "pw-gdeliveryd-home": {},
+    "pw-gfactiond-home": {},
+    "pw-glinkd-home": {},
+    "pw-logservice-home": {},
+    "pw-uniquenamed-home": {}
+  }
+}
