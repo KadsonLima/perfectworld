@@ -54,10 +54,11 @@ A aceitação de um lance no cliente ainda precisa de validação dentro do jogo
 
 ### Binário e teste do agendamento
 
-Compose monta `runtime/patches-tw5/gdeliveryd`. Reproduzir com
-`python tools/patch-tw-local.py --output runtime/patches-tw5` com o arquivo de
+Compose monta `runtime/patches-tw6/gdeliveryd`. Reproduzir com
+`python tools/patch-tw-local.py --output runtime/patches-tw6` com o arquivo de
 destino fora de uso. Os originais conferidos por SHA-256 ficam em
-`backups/tw-binaries-original`; a versão anterior fica em `runtime/patches`.
+`backups/tw-binaries-original`; as versões anteriores ficam em `runtime/patches`
+e `runtime/patches-tw5` (esta com o defeito descrito abaixo).
 O manifesto do novo diretório registra o hash e os pontos alterados.
 
 O patch preserva a seleção nativa de disputas e a persistência/notificação
@@ -65,9 +66,30 @@ executadas por EndChallenge. Altera a gravação de `battle_time` em ArrangeBatt
 remove a correção para a próxima semana, passa tempo real para UpdateBattle e
 OnBattleStart/OnBattleEnd e permite início quando `agora == battle_time`.
 
-`python tools/test-tw-five-minutes.py` executa as instruções x86 em Unicorn para
+`python tools/test-tw-five-minutes.py [runtime/patches-tw6]` executa as instruções x86 em Unicorn para
 verificar +300 segundos, preservação da pilha/flags, ausência de correção semanal,
-relógio real e os limites de 299/300/301 segundos. Dependência de teste isolada:
+relógio real, os limites de 299/300/301 segundos, a duração da TW de teste e que o
+gancho do TestBattle não altera o estado global da TW.
+
+### Correção de 27/09/2026: TW parava de funcionar depois do TW Teste
+
+O gancho do `TestBattle` em `patches-tw5` gravava `(flags & ~1) | 0xa` em
+`BattleManager+0x18`, que guarda o estado global da TW (`1` inicializado,
+`2` lances abertos, `8` mapa carregado, `0x10` bônus, `0x20` agendamento).
+Efeitos, todos até reiniciar o delivery:
+
+- sem o bit `1`, o estado do mapa enviado ao cliente (`SendMap`, `flags & 3`)
+  deixava de indicar TW ativa: NPC não deixava entrar e os lances não funcionavam;
+- com o bit `2`, o `UpdateBattle` parava e, no minuto seguinte, o `UpdateBid`
+  fazia um `endbid` falso: `DBBattleLoad` → `SyncChallenge` (log
+  `challenger not equal X != 0`) apagava o atacante e `EndChallenge` encerrava a rodada;
+- a TW de teste durava 24 h no gs, mas o delivery cancela uma cidade em luta 4 h
+  depois do início (`OnBattleStart`: agora + 14400); o fim da batalha deixava de contar.
+
+`patches-tw6` não mexe nesses bits e usa 3 horas (`TEST_BATTLE_SECONDS`, abaixo das 4 h).
+A reserva do painel dura a batalha + 10 minutos, não mais 24 horas.
+
+Dependência de teste isolada:
 `python -m pip install --target runtime/test-deps unicorn`.
 
 ## Testar a catapulta
@@ -85,7 +107,7 @@ relógio real e os limites de 299/300/301 segundos. Dependência de teste isolad
 6. Teste item de catapulta, vínculo ao puxador, movimento, distância máxima,
    ataque às estruturas, dano e perda do vínculo quando o puxador morre.
 
-A função local usa 24 horas. A atribuição do território modifica seu dono e
+A função local usa 3 horas. A atribuição do território modifica seu dono e
 permanece se a batalha falhar. O painel salva o estado anterior em
 `runtime/admin/territory-*.json` e registra resultados em `actions.jsonl`.
 Esses registros não substituem um backup completo do banco.
@@ -96,7 +118,7 @@ Não há necessidade de jogadores online dos dois lados para enviar o comando,
 mas entrada e uso da catapulta dependem das regras efetivas do cliente/servidor.
 
 Se houver timeout após o envio, o painel não informa sucesso nem permite repetir
-o pedido para o mesmo território por 24 horas. Consulte os logs. Não há botão
+o pedido para o mesmo território até o fim previsto da batalha. Consulte os logs. Não há botão
 para cancelar a guerra nem restauração automática do dono anterior.
 
 ## Protocolo e evidência
@@ -111,12 +133,12 @@ tabela de símbolos e das instruções, sem alterar executáveis.
 - A tag 4 interpreta `territorio-atacante` com `%d-%d` e chama
   `GNET::BattleManager::TestBattle(int,int)` (`0x083442d8`).
 - TestBattle usa o dono atual como defensor, resolve o mapa pelo nível territorial
-  e adiciona 86400 segundos ao horário de término. Por isso o dono é atribuído e
+  e adiciona 10800 segundos (3 h, via patch) ao horário de término. Por isso o dono é atribuído e
   confirmado no banco antes da solicitação de TW PvP.
 - Sucesso exige `BattleStart_Re: retcode=0 battle_id=<territorio>.` nos logs do
   delivery. Apenas enviar bytes ou ver o processo bg ativo não indica sucesso.
 - O comando de teste altera também estado em memória; a tabela persistida pode
-  ainda parecer livre. O painel mantém uma reserva local de 24 horas.
+  ainda parecer livre. O painel mantém uma reserva local enquanto a batalha dura.
 
 O PHP usa somente três ações fixas: probe sem alteração (tag desconhecida 999),
 atribuir dono e iniciar teste. Não oferece execução arbitrária de comandos.

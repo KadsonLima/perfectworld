@@ -88,6 +88,7 @@ BID_RE = re.compile(r'\b(beginbid|endbid):')
 DELIVERY_HASHES = {
     '19f4081f407e1e6d0a398bb299d2efa3b43de284a7eca1ec85e31a5212a4f959',
     'c78bc4f1b8b2b499257d2b815def6bc1ff3e11ed79e459d44a64d871c3dcb250',
+    'c41299d6fb0361a220a3fe5f272377e48464e8f353cf7edb04167912337ded64',
 }
 
 
@@ -215,7 +216,7 @@ def create_tw(data):
     state_path = RUNTIME / 'tw-tests.json'
     states = json.loads(state_path.read_text()) if state_path.exists() else {}
     if states.get(str(city), {}).get('expires', 0) > time.time():
-        raise ValueError('Ja existe uma solicitacao de TW de teste para este territorio; aguarde 24 horas')
+        raise ValueError('Ja existe uma TW de teste para este territorio; aguarde o fim dela')
     before = {'action': 'tw_before', 'city': city, 'attacker': attacker, 'defender': defender, 'territory': territory}
     audit(before)
     snapshot = RUNTIME / f'territory-{city}-{time.time_ns()}.json'
@@ -234,17 +235,20 @@ def create_tw(data):
         raise ValueError('A atribuicao do territorio nao foi confirmada; a batalha nao foi solicitada')
     # Reserve before scheduling: a timeout or refresh cannot cause a duplicate battle.
     start_at = time.time() + TEST_TW_DELAY
-    states[str(city)] = {'expires': time.time() + 86400, 'attacker': attacker, 'defender': defender,
+    states[str(city)] = {'expires': start_at + TEST_TW_SECONDS + 600, 'attacker': attacker, 'defender': defender,
                          'state': 'scheduled', 'start_at': start_at}
     state_path.write_text(json.dumps(states), encoding='utf-8')
     audit({'action': 'tw_scheduled', 'city': city, 'attacker': attacker, 'start_at': start_at})
     schedule_test_battle(city, attacker, start_at)
     when = datetime.fromtimestamp(start_at).strftime('%H:%M:%S')
-    return {'ok': True, 'message': f'Territorio {city} atribuido ao defensor. A TW de teste comeca em {TEST_TW_DELAY // 60} minutos (as {when}) e dura 24 horas. Acompanhe o resultado nos logs.'}
+    return {'ok': True, 'message': f'Territorio {city} atribuido ao defensor. A TW de teste comeca em {TEST_TW_DELAY // 60} minutos (as {when}) e dura {TEST_TW_SECONDS // 3600} horas. Acompanhe o resultado nos logs.'}
 
 
 # TestBattle dispatches BattleStart to the gs immediately; the delay is applied here.
 TEST_TW_DELAY = 180
+# Battle length set by tools/patch-tw-local.py (TEST_BATTLE_SECONDS); the
+# reservation ends with the battle plus the delivery's 600s start window.
+TEST_TW_SECONDS = 10800
 
 
 def schedule_test_battle(city, attacker, start_at):

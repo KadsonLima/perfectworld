@@ -4,8 +4,12 @@ gamedbd when a character is created, exported to its clsconfig table.
 Each of the 12 real templates gets level 100 with the status points spent on
 the set requirements (rest in vitality), every normal trainer skill at its
 maximum level (capped at 10, sage/demon versions excluded), the ★★ Nirvana
-weapon and 6-piece armor set +12 with stones equipped, and HP/MP charms in the
-inventory. The 4 empty templates of gender-locked classes are left untouched.
+weapon and 6-piece armor set +12 with stones equipped, HP/MP charms in the
+inventory, Demon 3 cultivation (level2 32) with every demon skill the trainers
+teach and 2 chi sparks of maximum chi. The 4 empty templates of gender-locked
+classes are left untouched. Templates already at level 100 only receive the
+cultivation, chi, demon skill and supplies update. Every template also carries
+1,000,000,000 coins, full stacks of the 6 city Teleport Stones and Teleport Incense.
 
 Native exportrole fails on templates because they have no task record, so the
 export uses a copy of gamedbd whose ExportRole skips that table (patched copy,
@@ -47,9 +51,69 @@ CLASSES = {0:('heavy',25653),   # ★★Unicorn's Tragedy
            11:('arcane',45018)} # ★★Dent of Destiny
 WEAPON_STONE, ARMOR_STONE = 38154, 38155  # Devil Stone ATK LV +3, Serenity Stone DEF LV +3
 HP_CHARM, MP_CHARM = 46967, 46966         # Ruby Guardian Charm, Ruby Spirit Charm
+# Coins in the inventory: exactly the gs cap (gplayer_imp _money_capacity = 200,000,000).
+# Above it the gs aborts on faction operations (FactionTradeComplete assert).
+MONEY = 200_000_000
+# Full stacks: (id, count, proc_type, data). Teleport Stone data is its task id
+# (item_taskdice, TASKDICE_ESSENCE task_lists_1_id); Teleport Incense data is
+# int(use_time*20) as generate_townscroll writes it (use_time 10).
+SUPPLIES = [(12860,100,8,struct.pack('<i',7018)),   # Teleport Stone(Etherblade)
+            (12861,100,8,struct.pack('<i',7019)),   # Teleport Stone(Plume City)
+            (12862,100,8,struct.pack('<i',7020)),   # Teleport Stone(Lost City)
+            (12863,100,8,struct.pack('<i',7021)),   # Teleport Stone(Archosaur)
+            (12864,100,8,struct.pack('<i',7022)),   # Teleport Stone(Dreamwvr. Port)
+            (12865,100,8,struct.pack('<i',7023)),   # Teleport Stone(Thousnd.Streams)
+            (2100,999,8,struct.pack('<i',200))]     # Teleport Incense
 LEVEL, REFINE, SKILL_LEVEL = 100, 12, 10
 SAGE_DEMON_RANKS = {20,21,22,30,31,32}
 REFINE_FACTOR = 37.5  # +12 multiplier of the refine table in gs
+# level2 8 is the last cultivation before sage/demon (skill ranks 0-8 are normal);
+# existing characters are raised to it by cultivate_roles.py.
+CULTIVATION = 8
+# Templates start as Demon 3 (level2 30-32 = 狂 ranks 1-3) with every demon skill.
+TEMPLATE_CULTIVATION = 32
+DEMON_RANKS = {30,31,32}
+# Base max AP at extend_prop+0x90 (gactive_imp::SetMaxAP); skill sparks cost 100.
+MAX_CHI, MAX_CHI_OFFSET = 200, 0x90
+
+def cultivate(root):
+    """Cultivation and maximum chi, as the cultivation/chi quests set them."""
+    status=root.find('status')
+    variable(status,'level2').text=str(TEMPLATE_CULTIVATION)
+    prop=bytearray(bytes.fromhex(value(status,'property')))
+    struct.pack_into('<i',prop,MAX_CHI_OFFSET,MAX_CHI)
+    variable(status,'property').text=prop.hex()
+    return {'cultivation':TEMPLATE_CULTIVATION,'max_chi':MAX_CHI}
+
+def stock(root):
+    """Set inventory money to MONEY (raised, or lowered to the gs cap) and top every SUPPLIES item up to a full stack.
+    Returns the changes; nothing changes when already stocked."""
+    pocket=root.find('pocket');changes={}
+    money=int(value(pocket,'money'))
+    if money!=MONEY:variable(pocket,'money').text=str(MONEY);changes['money']=[money,MONEY]
+    items=pocket.findall('items')
+    occupied={int(value(i,'pos')) for i in items}
+    for item_id,count,proctype,data in SUPPLIES:
+        stack=next((i for i in items if int(value(i,'id'))==item_id),None)
+        if stack is not None:
+            have=int(value(stack,'count'))
+            if have<count:variable(stack,'count').text=str(count);changes[item_id]=[have,count]
+            continue
+        pos=next((i for i in range(int(value(pocket,'capacity'))) if i not in occupied),None)
+        if pos is None:changes[item_id]='inventario cheio';continue
+        occupied.add(pos)
+        item(pocket,{'id':item_id,'pos':pos,'count':count,'max_count':count,'data':data.hex(),'proctype':proctype,
+                     'expire_date':0,'guid1':0,'guid2':0,'mask':0},'items')
+        changes[item_id]=[0,count]
+    return changes
+
+def learn(status,learned):
+    """Skill blob entries: id, ability, level. Entries not in `learned` are kept."""
+    blob=bytes.fromhex(value(status,'skills'))
+    existing=[struct.unpack_from('<3i',blob,4+12*i) for i in range(struct.unpack_from('<i',blob)[0])]
+    ids={s for s,_ in learned}
+    entries=[e for e in existing if e[0] not in ids]+[(s,0,l) for s,l in learned]
+    variable(status,'skills').text=(struct.pack('<i',len(entries))+b''.join(struct.pack('<3i',*e) for e in entries)).hex()
 
 def sha256(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
@@ -70,12 +134,16 @@ def load():
         server[kind]={r['ID']:r for r in extra[kind]}
     return server,client,extra
 
-def class_skills(extra,cls):
+def class_skills(extra,cls,demon=False):
+    """Trainer skills of the class at maximum level: normal ones, or the demon (狂) ones.
+    gs keeps the normal skill next to its demon version and marks it overridden
+    (SkillWrapper::LoadDatabase -> OverrideSkill), so both go in the list."""
     skills=extra['SKILLS'];taught=set()
     for service in extra['NPC_SKILL_SERVICE']:
         taught.update(v for k,v in service.items() if k.startswith('id_skills') and v)
+    wanted=(lambda rank:rank in DEMON_RANKS) if demon else (lambda rank:rank not in SAGE_DEMON_RANKS)
     return sorted((sid,min(SKILL_LEVEL,skills[str(sid)]['max_level'])) for sid in taught
-                  if skills[str(sid)]['cls']==cls and skills[str(sid)]['rank'] not in SAGE_DEMON_RANKS)
+                  if skills[str(sid)]['cls']==cls and wanted(skills[str(sid)]['rank']))
 
 def sockets(r,count):
     probabilities=[max(r[f'drop_probability_socket{i}'],r[f'make_probability_socket{i}']) for i in range(count)]
@@ -150,12 +218,9 @@ def prepare(xml,server,client,extra):
         struct.pack_into('<2i',prop,offset,low+grow(k),high+grow(k))
     for name,v in (('level',LEVEL),('exp',0),('pp',0),('hp',max_hp),('mp',max_mp),('property',prop.hex())):
         variable(status,name).text=str(v)
-    # Skills: id, ability, level. Existing entries (town portal) are kept.
-    blob=bytes.fromhex(value(status,'skills'))
-    existing=[struct.unpack_from('<3i',blob,4+12*i) for i in range(struct.unpack_from('<i',blob)[0])]
-    learned=class_skills(extra,cls);ids={s for s,_ in learned}
-    entries=[e for e in existing if e[0] not in ids]+[(s,0,l) for s,l in learned]
-    variable(status,'skills').text=(struct.pack('<i',len(entries))+b''.join(struct.pack('<3i',*e) for e in entries)).hex()
+    # Existing skill entries (town portal) are kept.
+    learned=class_skills(extra,cls);demon=class_skills(extra,cls,demon=True)
+    learn(status,learned+demon)
     eq=root.find('equipment');pocket=root.find('pocket')
     for old_item in list(eq.findall('inv')):
         if int(value(old_item,'pos')) in dict((p,0) for p,*_ in records):eq.remove(old_item)
@@ -172,11 +237,23 @@ def prepare(xml,server,client,extra):
                      'data':struct.pack('<if',r[total_key],r['trigger_amount']).hex(),'proctype':r['proc_type'],
                      'expire_date':0,'guid1':0,'guid2':0,'mask':mask},'items')
         report.append({'slot':f'inventory {pos}','id':item_id,'name':r['Name']})
+    cultivation=cultivate(root);supplies=stock(root)
     ET.indent(root)
     return ET.tostring(root,encoding='utf-8',xml_declaration=True),{
         'role':rid,'class':CLASS_NAMES[cls],'gender':int(value(base,'gender')),'level':LEVEL,
         'stats':{'vitality':vitality,'magic':energy,'strength':strength,'dexterity':agility},
-        'max_hp':max_hp,'max_mp':max_mp,'skills':len(learned),'items':report}
+        'max_hp':max_hp,'max_mp':max_mp,'skills':len(learned),'demon_skills':len(demon),**cultivation,'items':report,'supplies':supplies}
+
+def prepare_upgrade(xml,extra):
+    """Templates already given the loadout: only cultivation, chi, demon skills and supplies change."""
+    root=ET.fromstring(xml);base=root.find('base');status=root.find('status')
+    assert int(value(base,'id')) in TEMPLATES and int(value(status,'level'))==LEVEL
+    cultivation=cultivate(root)
+    demon=class_skills(extra,int(value(base,'cls')),demon=True);learn(status,demon)
+    supplies=stock(root)
+    ET.indent(root)
+    return ET.tostring(root,encoding='utf-8',xml_declaration=True),{
+        'role':int(value(base,'id')),'class':CLASS_NAMES[int(value(base,'cls'))],**cultivation,'demon_skills':len(demon),'supplies':supplies}
 
 def role_xml(out):
     start=out.find(b'<?xml');end=out.rfind(b'</role>')
@@ -193,8 +270,16 @@ def run(volumes,image,directory,script):
                     '--mount',f'type=bind,source={directory},target=/edit',
                     '--workdir','/home','--entrypoint','sh',image,'-c',script],timeout=600)
 
-def pipeline(volumes,image,directory):
+def loadout():
+    """Transform giving each template the starting loadout (see module docstring)."""
     server,client,extra=load()
+    def transform(xml):
+        if int(value(ET.fromstring(xml).find('status'),'level'))==LEVEL:return prepare_upgrade(xml,extra)
+        return prepare(xml,server,client,extra)
+    return transform
+
+def pipeline(volumes,image,directory,transform,report_name):
+    """Export every real template, apply transform(xml) -> (xml, report), import and verify."""
     patched=export_binary();(directory/'gamedbd-export').write_bytes(patched.read_bytes())
     exporter='cp /edit/gamedbd-export /tmp/gx && chmod +x /tmp/gx && '
     reports=[];edited_ids=[]
@@ -202,14 +287,13 @@ def pipeline(volumes,image,directory):
         for rid in TEMPLATES:
             xml=role_xml(run(volumes,image,directory,exporter+f'/tmp/gx gamesys.conf exportrole {rid}'))
             (directory/f'before-{rid}.xml').write_bytes(xml)
-            root=ET.fromstring(xml)
-            if not value(root.find('status'),'skills'):continue  # empty gender-locked template
-            edited,report=prepare(xml,server,client,extra)
+            if not value(ET.fromstring(xml).find('status'),'skills'):continue  # empty gender-locked template
+            edited,report=transform(xml)
             (directory/f'edited-{rid}.xml').write_bytes(edited);reports.append(report);edited_ids.append(rid)
     finally:
         (directory/'gamedbd-export').unlink()
     assert sorted(r['class'] for r in reports)==sorted(CLASS_NAMES),'Expected one template per class'
-    (directory/'loadout.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2),encoding='utf-8')
+    (directory/report_name).write_text(json.dumps(reports,ensure_ascii=False,indent=2),encoding='utf-8')
     for rid in edited_ids:
         (directory/f'import-{rid}.log').write_bytes(run(volumes,image,directory,f'./gamedbd gamesys.conf importrole /edit/edited-{rid}.xml'))
         actual=role_xml(run(volumes,image,directory,f'./gamedbd gamesys.conf exportrole {rid}'))
@@ -217,6 +301,11 @@ def pipeline(volumes,image,directory):
         expected=ET.fromstring((directory/f'edited-{rid}.xml').read_bytes());got=ET.fromstring(actual)
         for section in ['base','status','pocket','equipment','storehouse']:
             assert canonical(expected.find(section))==canonical(got.find(section)),f'Native import differs in {section} of {rid}'
+    export_clsconfig(volumes,image,directory)
+    return reports
+
+def export_clsconfig(volumes,image,directory):
+    """Rebuild the clsconfig table from the imported templates."""
     md5='md5sum clsconfig dbhomewdb/dbdata/clsconfig'
     before=run(volumes,image,directory,md5).decode()
     out=run(volumes,image,directory,'./gamedbd gamesys.conf exportclsconfig && '+md5)
@@ -232,7 +321,6 @@ def pipeline(volumes,image,directory):
     sums={l.split()[0] for l in final.splitlines() if l.endswith('clsconfig')}
     assert len(sums)==1,'clsconfig copies differ'
     (directory/'clsconfig.md5').write_text(final)
-    return reports
 
 def gamedbd_image():
     config=json.loads(command(['docker','compose','config','--format','json']))
@@ -242,23 +330,23 @@ def check_binary(container):
     live=command(['docker','exec',container,'sha256sum','/home/gamedbd']).split()[0].decode()
     assert live==sha256(ROOT/'runtime/inspect/gamedbd'),'Live gamedbd differs from runtime/inspect/gamedbd'
 
-def scratch():
+def scratch(transform,name='class-templates',report_name='loadout.json'):
     stamp=datetime.now().strftime('%Y%m%d-%H%M%S')
-    directory=ROOT/'runtime/class-templates'/f'scratch-{stamp}';directory.mkdir(parents=True)
+    directory=ROOT/'runtime'/name/f'scratch-{stamp}';directory.mkdir(parents=True)
     container=compose('ps','-q','perfectworld-gamedbd').decode().strip();check_binary(container)
-    image=gamedbd_image();volume=f'pw-class-templates-{stamp}'
+    image=gamedbd_image();volume=f'pw-{name}-{stamp}'
     command(['docker','volume','create',volume])
     try:
         command(['docker','run','--rm','--volumes-from',container,'-v',f'{volume}:/copy','--entrypoint','sh',image,
                  '-c','cp -a /home/. /copy/'],timeout=600)
-        reports=pipeline(['-v',f'{volume}:/home'],image,directory)
+        reports=pipeline(['-v',f'{volume}:/home'],image,directory,transform,report_name)
         print(json.dumps({'scratch':True,'output':str(directory),'templates':reports},ensure_ascii=False,indent=2))
     finally:
         command(['docker','volume','rm','-f',volume])
 
-def apply():
+def apply(transform,name='class-templates',report_name='loadout.json'):
     stamp=datetime.now().strftime('%Y%m%d-%H%M%S')
-    directory=ROOT/'backups/class-templates'/stamp;directory.mkdir(parents=True)
+    directory=ROOT/'backups'/name/stamp;directory.mkdir(parents=True)
     container=compose('ps','-q','perfectworld-gamedbd').decode().strip();check_binary(container)
     image=gamedbd_image();stopped=False
     try:
@@ -268,7 +356,7 @@ def apply():
         # Full persistent game DB and clsconfig backup.
         command(['docker','cp',f'{container}:/home/dbhomewdb',str(directory/'dbhomewdb')],timeout=600)
         command(['docker','cp',f'{container}:/home/clsconfig',str(directory/'clsconfig')])
-        reports=pipeline(['--volumes-from',container],image,directory)
+        reports=pipeline(['--volumes-from',container],image,directory,transform,report_name)
         print(json.dumps({'applied':True,'backup':str(directory),'templates':reports},ensure_ascii=False,indent=2))
     except Exception:
         if stopped:
@@ -287,4 +375,4 @@ if __name__=='__main__':
     group.add_argument('--scratch',action='store_true')
     group.add_argument('--apply',action='store_true')
     args=parser.parse_args()
-    scratch() if args.scratch else apply()
+    (scratch if args.scratch else apply)(loadout())

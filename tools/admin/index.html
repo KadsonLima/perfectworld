@@ -27,7 +27,7 @@
 <li>Entre pelo NPC de Guerra Territorial com seu personagem de um desses clãs.</li>
 <li>Confira compra e uso do item de catapulta, vínculo ao puxador, movimento, ataque às estruturas e dano.</li>
 </ol><p class="muted">Uma batalha aceita pelo servidor ainda precisa do teste no cliente. Não é necessário ter jogadores dos dois lados para solicitar o cenário de teste.</p><button onclick="refreshData()">Atualizar clãs e personagens</button> <button onclick="action('/api/probe',{})">Verificar integração TW</button><p id="roles" class="muted"></p></section>
-<section><h2>Criar TW de teste</h2><p>Duração local: 24 horas. O território escolhido será atribuído ao clã defensor na hora e a batalha começa 3 minutos depois. Manter o painel aberto não é necessário, mas ele precisa continuar rodando.</p>
+<section><h2>Criar TW de teste</h2><p>Duração local: 3 horas. O território escolhido será atribuído ao clã defensor na hora e a batalha começa 3 minutos depois. Manter o painel aberto não é necessário, mas ele precisa continuar rodando.</p>
 <div class="grid"><div><label for="city">Território</label><select id="city"></select></div><div><label for="attacker">Clã atacante</label><select id="attacker"></select></div><div><label for="defender">Clã defensor</label><select id="defender"></select></div></div>
 <label class="check"><input id="assign" type="checkbox">Atribuir este território ao defensor para preparar a TW PvP de teste.</label>
 <small class="muted">O estado anterior do território e o resultado ficam salvos para consulta. Se a guerra falhar, a atribuição do território permanece.</small>

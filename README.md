@@ -36,6 +36,9 @@ make up-perfectworld
 ### Developing
 TBD
 
+### Documentation
+- [Guia técnico: restaurar o bug de skill](docs/GUIA-BUG-SKILL.md)
+
 ### Future Feature
 currently, it's not support `pwAdmin` since `pwAdmin` required modifiying & executing to each subsystems. This is not possible in microservices, since we are running each subsystems in different container.
 

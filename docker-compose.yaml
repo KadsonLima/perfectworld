@@ -264,6 +264,15 @@
         },
         {
           "type": "bind",
+          "source": "./runtime/patches-skill-cancel/gs",
+          "target": "/home/gs",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
           "source": "./runtime/tw-balance-1m/elements.data",
           "target": "/home/config/elements.data",
           "read_only": true,
@@ -413,7 +422,7 @@
         },
         {
           "type": "bind",
-          "source": "./runtime/patches-tw5/gdeliveryd",
+          "source": "./runtime/patches-tw6/gdeliveryd",
           "target": "/home/gdeliveryd",
           "read_only": true,
           "bind": {
@@ -699,7 +708,7 @@
         "MYSQL_PASSWORD": "${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD no .env}",
         "MYSQL_USER": "root",
         "TZ": "${TZ:-America/Montevideo}",
-        "USER_GOLD": 1000000
+        "USER_GOLD": 100000000
       },
       "expose": [
         "80/tcp"

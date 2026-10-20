@@ -1,0 +1,18 @@
+{
+  "server": {"host": "127.0.0.1", "port": 29000},
+  "startup_delay": 20,
+  "bots": [
+    {"login": "botwr", "password": "TROCAR", "role": "Guerreiro", "persona": "Fala pouco e é sério."},
+    {"login": "botmg", "password": "TROCAR", "role": "Mago"},
+    {"login": "botbm", "password": "TROCAR", "role": "Barbaro"},
+    {"login": "botft", "password": "TROCAR", "role": "Feiticeira"},
+    {"login": "botmc", "password": "TROCAR", "role": "Mercenario"},
+    {"login": "botaq", "password": "TROCAR", "role": "Arqueiro"},
+    {"login": "botsc", "password": "TROCAR", "role": "Sacerdote", "persona": "Gentil, sempre oferece cura.",
+     "self_buffs": [], "buff_interval": 60,
+     "ambient_lines": ["Alguém precisa de buff?", "Cura grátis aqui na cidade!"]},
+    {"login": "botes", "password": "TROCAR", "role": "Espiritualista"},
+    {"login": "botar", "password": "TROCAR", "role": "Arcano"},
+    {"login": "botms", "password": "TROCAR", "role": "Mistico"}
+  ]
+}

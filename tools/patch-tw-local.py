@@ -45,7 +45,11 @@ def offset(elf,address):
             return segment['p_offset']+address-segment['p_vaddr']
     raise ValueError('Address outside file-backed load segments')
 
-manifest={'minimum_clan_seconds':60,'battle_duration_seconds':86400,'patches':{}}
+# Test battles must end before the delivery's own watchdog: OnBattleStart
+# cancels a fighting city 14400 seconds after it starts. A longer gs battle
+# would outlive the delivery state, so its result would be dropped.
+TEST_BATTLE_SECONDS=10800
+manifest={'minimum_clan_seconds':60,'battle_duration_seconds':TEST_BATTLE_SECONDS,'patches':{}}
 data,elf=original('gfactiond')
 position=offset(elf,0x80e4a20)
 assert data[position:position+6]==bytes.fromhex('81fa3f7e0500')
@@ -70,11 +74,15 @@ assert cave_offset==0x61bec0 and cave_address==0x8663ec0
 gap=next_segment['p_offset']-cave_offset
 assert gap==320 and data[cave_offset:cave_offset+gap]==bytes(gap)
 
-# TestBattle sets the challenger but omits the phase, battle timestamp and
-# faction synchronization used by the client's territory map and TW NPC.
-# Execute the replaced stores, preserve flags/registers, fill the timestamp
-# from TestBattle's existing current-time local and use native notifications.
-code=bytearray(replaced+bytes.fromhex('9c608b45ec89421c8b5d08836318fe834b180a'))
+# TestBattle sets the challenger but omits the battle timestamp and faction
+# synchronization used by the client's territory map and TW NPC. Execute the
+# replaced stores, preserve flags/registers, fill the timestamp from
+# TestBattle's existing current-time local and use native notifications.
+# BattleManager+0x18 holds the global TW state (1 initialized, 2 bidding,
+# 8 map loaded) and must stay untouched: clearing 1 left the client map and
+# NPC disabled until restart, and setting 2 made the next tick run a spurious
+# endbid that reloaded the table and dropped the test challenger.
+code=bytearray(replaced+bytes.fromhex('9c608b45ec89421c8b5d08'))
 # Account for the trampoline return address, flags and saved registers so
 # nested native calls preserve the original 16-byte stack alignment.
 code.extend(bytes.fromhex('83ec08'))
@@ -95,6 +103,8 @@ assert cave_address+len(code)==fmt_address
 instructions=list(Cs(CS_ARCH_X86,CS_MODE_32).disasm(bytes(code),cave_address))
 assert sum(i.size for i in instructions)==len(code)
 assert [i.mnemonic for i in instructions].count('call')==3
+assert not any('+ 0x18]' in i.op_str and i.mnemonic in ('and','or','mov') and i.op_str.startswith('dword ptr [ebx')
+               for i in instructions),'TestBattle hook must not modify BattleManager state flags'
 payload=code+fmt
 
 # Schedule every battle selected by the native allocator at real time + 300s.
@@ -133,10 +143,13 @@ for address in (0x8342612,0x8342ae0,0x8342c00):
 start_compare=offset(elf,0x83422b4)
 assert data[start_compare:start_compare+2]==bytes.fromhex('0f8d')
 data[start_compare+1]=0x8f
-# TestBattle's native duration is 1800 seconds. Extend it to 24 hours.
+# TestBattle's native duration is 1800 seconds; extend it within the watchdog.
 duration_pos=offset(elf,0x834441c)
 assert data[duration_pos:duration_pos+5]==bytes.fromhex('0508070000')
-data[duration_pos+1:duration_pos+5]=struct.pack('<I',86400)
+watchdog=offset(elf,0x8342ae8)
+assert data[watchdog:watchdog+5]==b''+struct.pack('<I',14400)
+assert TEST_BATTLE_SECONDS<14400
+data[duration_pos+1:duration_pos+5]=struct.pack('<I',TEST_BATTLE_SECONDS)
 assert len(payload)<=gap
 data[cave_offset:cave_offset+len(payload)]=payload
 data[position:position+6]=b'\xe8'+struct.pack('<i',cave_address-hook-5)+b'\x90'
@@ -148,9 +161,9 @@ struct.pack_into('<II',data,ph+16,size,size)
 save_binary('gdeliveryd',data)
 manifest['patches']['gdeliveryd']={'original_sha256':EXPECTED['gdeliveryd'],'patched_sha256':digest(data),
     'address':hex(hook),'trampoline':hex(cave_address),'payload_bytes':len(payload),
-    'change':'TestBattle map synchronization and 24h duration; native rounds scheduled 300s after closing; battles use real time',
+    'change':f'TestBattle map synchronization (state flags untouched) and {TEST_BATTLE_SECONDS}s duration; native rounds scheduled 300s after closing; battles use real time',
     'battle_delay_seconds':300,'schedule_hook':hex(schedule_hook),'schedule_trampoline':hex(schedule_address),
-    'battle_duration_seconds':86400,'duration_patch_address':'0x834441c',
+    'battle_duration_seconds':TEST_BATTLE_SECONDS,'duration_patch_address':'0x834441c',
     'update_trampoline':hex(update_address),'real_time_calls':['0x8342612','0x8342ae0','0x8342c00'],
     'instructions':[f'{hex(i.address)} {i.mnemonic} {i.op_str}' for i in instructions]}
 (OUT/'tw-patches.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')

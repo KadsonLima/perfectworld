@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../../.."
+		},
+		{
+			"path": "../../../../Perfect World International 155 v159"
+		},
+		{
+			"path": "C:/Users/Administrator/Downloads/PW Bug Skill"
+		}
+	],
+	"settings": {
+		"powershell.cwd": "PW SERVER"
+	}
+}
